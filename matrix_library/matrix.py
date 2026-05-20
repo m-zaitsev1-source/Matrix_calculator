@@ -114,39 +114,71 @@ def divide_scalar(mat: Matrix, value: float):
         for j in range(mat.col):
             new_mat.data[i][j] = mat.data[i][j] / value
     return new_mat
-
-def resize(mat: Matrix, rows: int, cols: int):
-    """Resize existing matrix, fill new elements with zeros (if new dimensions greater than current)."""
-    ...
-
-def get_element(mat: Matrix, rowIdx: int, colIdx: int):
-    """Get element at specified position."""
-    ...
-
-def set_element(mat: Matrix, rowIdx: int, colIdx: int, value: float):
-    """Set element at specified position."""
-    ...
-
-def set_identity(mat: Matrix):
-    """Transform matrix into identity (square part only)."""
     ...
 
 def set_zero(mat: Matrix):
+    if not is_valid(mat):
+        raise ValueError("Invalid matrix")
     """Fill matrix with zeros."""
-    ...
+    for i in range(mat.row):
+        for j in range(mat.col):
+            mat.data[i][j] = 0.0
 
 def set_constants(mat: Matrix, value: float):
+    if not is_valid(mat):
+        raise ValueError("Invalid matrix")
     """Fill matrix with constant value."""
-    ...
+    for i in range(mat.row):
+        for j in range(mat.col):
+            mat.data[i][j] = value
 
 def transpose(mat: Matrix):
     """Return transposed matrix."""
-    ...
+    if not is_valid(mat):
+        raise ValueError("Invalid matrix")
+    new_mat = create(mat.col, mat.row)
+    for i in range(mat.row):
+        for j in range(mat.col):
+            new_mat.data[j][i] = mat.data[i][j]
+    return new_mat
 
-def inverse(mat: Matrix):
-    """Returns inverse matrix (square only)."""
-    ...
+def staircase(mat: Matrix):
+    """Return row echelon form of matrix."""
+    if not is_valid(mat):
+        raise ValueError("Invalid matrix")
+    new_mat = copy(mat)
+    for i in range(new_mat.row-1):
+        # Find pivot
+        pivot = None
+        for j in range(new_mat.col):
+            if new_mat.data[i][j] != 0:
+                pivot = j
+                break
+        if pivot is None:
+            continue
+        # Eliminate below
+        for k in range(i+1, new_mat.row):
+            factor = new_mat.data[k][pivot] / new_mat.data[i][pivot]
+            if factor == 0:
+                continue
+            for j in range(pivot, new_mat.col):
+                new_mat.data[k][j] -= factor * new_mat.data[i][j]
+    an_mat = create(new_mat.row, new_mat.col)
+    for i in range(an_mat.row):
+        k = 0
+        for j in range(new_mat.row):
+            if new_mat.data[j][k] != 0:
+                an_mat.data[i][k] = new_mat.data[j][k]
+                new_mat.data[j] = [0.0] * new_mat.col
+                k += 1
+                break
+    return an_mat
+
 
 def determinant(mat: Matrix):
     """Returns determinant of matrix (square only)."""
+    if not is_valid(mat):
+        raise ValueError("Invalid matrix")
+    if mat.row != mat.col:
+        raise ValueError("Matrix must be square")
     ...
