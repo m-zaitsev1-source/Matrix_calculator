@@ -47,10 +47,10 @@ def create_constants(rows, cols, value):
 
 def is_valid(mat: Matrix):
     """Check if matrix has valid dimensions and data."""
-    if mat.col*mat.row != len(mat.data):
-        return False
-    return True
-    ...
+    size = 0
+    for i in range(mat.row):
+        size += len(mat.data[i])
+    return size == mat.row * mat.col
 
 def copy(mat: Matrix):
     """Create deep copy of matrix."""
@@ -164,14 +164,14 @@ def staircase(mat: Matrix):
             for j in range(pivot, new_mat.col):
                 new_mat.data[k][j] -= factor * new_mat.data[i][j]
     an_mat = create(new_mat.row, new_mat.col)
-    for i in range(an_mat.row):
-        k = 0
+    k = 0
+    while k < new_mat.col: 
         for j in range(new_mat.row):
             if new_mat.data[j][k] != 0:
-                an_mat.data[i][k] = new_mat.data[j][k]
+                an_mat.data[k][k] = new_mat.data[j][k]
                 new_mat.data[j] = [0.0] * new_mat.col
-                k += 1
                 break
+        k += 1
     return an_mat
 
 
@@ -181,4 +181,11 @@ def determinant(mat: Matrix):
         raise ValueError("Invalid matrix")
     if mat.row != mat.col:
         raise ValueError("Matrix must be square")
+    mat = staircase(mat)
+    det = 1.0
+    for i in range(mat.row):
+        if mat.data[i][i] == 0:
+            return 0.0
+        det *= mat.data[i][i]
+    return round(det, 10)
     ...
