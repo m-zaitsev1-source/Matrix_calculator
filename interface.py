@@ -1,6 +1,13 @@
 from tkinter import *
-from unittest import case
 from matrix import *
+from tkinter import messagebox
+def perform_action():
+    try:
+        # Имитация ошибки (деление на ноль)
+        result = 10 / 0
+    except Exception as e:
+        # Вывод ошибки в отдельном модальном окне
+        messagebox.showerror("Ошибка", f"Произошла ошибка:\n{str(e)}")
 
 def translate(txt: str):
     #txt = "E{3,3} + E{3,3}"
@@ -87,6 +94,8 @@ def translate(txt: str):
                     b.append(add(a1, create_constants(a1.row, a1.col, float(a3))))
                 case '-':
                     b.append(subtract(a1, create_constants(a1.row, a1.col, float(a3))))
+                case '/':
+                    b.append(divide_scalar(a1, create_constants(a1.row, a1.col, float(a3))))
         elif type(a1) == str and type(a3) == Matrix:
             match a2:
                 case '*':
@@ -95,6 +104,8 @@ def translate(txt: str):
                     b.append(add(create_constants(a3.row, a3.col, float(a1)), a3))
                 case '-':
                     b.append(subtract(create_constants(a3.row, a3.col, float(a1)), a3))
+                case '/':
+                    b.append(divide_scalar(create_constants(a3.row, a3.col, float(a1)), a3))
             pass
     return to_string(b[0])
 

@@ -83,10 +83,13 @@ def multiply(mat1: Matrix, mat2: Matrix):
 
 def subtract(mat1: Matrix, mat2: Matrix):
     """Returns the result of (mat1 - mat2)."""
+    new_mat = create(max(mat1.row, mat2.row), max(mat1.col, mat2.col))
+    mat1 = extend(mat1, new_mat.row, new_mat.col)
+    mat2 = extend(mat2, new_mat.row, new_mat.col)
     for i in range(mat1.row):
         for j in range(mat1.col):
-            mat1.data[i][j] = mat1.data[i][j] - mat2.data[i][j]
-    return mat1
+            new_mat.data[i][j] = mat1.data[i][j] - mat2.data[i][j]
+    return new_mat
     ...
 def extend(mat1: Matrix, new_rows, new_cols):
     """Extend matrix to new dimensions by adding zeros."""
@@ -120,6 +123,8 @@ def multiply_scalar(mat: Matrix, value: float):
 
 def divide_scalar(mat: Matrix, value: float):
     """Divide matrix by scalar."""
+    if value == 0:
+        raise ValueError("Посос")
     new_mat = create(mat.row, mat.col)
     for i in range(mat.row):
         for j in range(mat.col):
