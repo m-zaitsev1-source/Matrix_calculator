@@ -1,5 +1,5 @@
 from tkinter import *
-from matrix import *
+from libraries.matrix import *
 from tkinter import messagebox
 def perform_action(func):
     try:

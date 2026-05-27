@@ -1,4 +1,4 @@
-import matrix
+import libraries.matrix as matrix
 def print_matrix(mat):
     """Print matrix in readable format."""
     for i in range(mat.row):
