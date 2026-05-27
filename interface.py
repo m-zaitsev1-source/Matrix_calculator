@@ -1,13 +1,11 @@
 from tkinter import *
 from matrix import *
 from tkinter import messagebox
-def perform_action():
+def perform_action(func):
     try:
-        # Имитация ошибки (деление на ноль)
-        result = 10 / 0
+        func
     except Exception as e:
-        # Вывод ошибки в отдельном модальном окне
-        messagebox.showerror("Ошибка", f"Произошла ошибка:\n{str(e)}")
+        messagebox.showerror("Ошибка", str(e))
 
 def translate(txt: str):
     #txt = "E{3,3} + E{3,3}"
@@ -26,7 +24,7 @@ def translate(txt: str):
             while txt[o] != '}':
                 o += 1
             word = txt[k:o+1] # "M{(1,2,3); (4,5,6)}"
-            l = word[2:-1].split('; ') # ['(1,2,3)', '(4,5,6)']
+            l = word[2:-1].split(';') # ['(1,2,3)', '(4,5,6)']
             for i in range(len(l)):
                 l[i] = l[i][1:-1].split(',') # [['1', '2', '3'], ['4', '5', '6']]
                 for j in range(len(l[i])):
@@ -35,6 +33,10 @@ def translate(txt: str):
             m.data = l
             if txt[k-1] == 't':
                 m = transpose(m)
+            if txt[k-1] == "d":
+                m = determinant(m)
+            if txt[k-1] == "i":
+                m = invert(m)
             k = o
         elif txt[k] == "Z":
             o = k
@@ -51,14 +53,23 @@ def translate(txt: str):
             word = txt[k:o+1] # "E{3,3}"
             size = word[2:-1].split(',') # ['3', '3']
             m = create_identity(int(size[0]), int(size[1]))
+            if txt[k-1] == 't':
+                m = m
+            if txt[k-1] == "d":
+                m = 1
+            if txt[k-1] == "i":
+                m = m
             k = o
         elif txt[k] == "V":
             o = k 
             while txt[o] != '}':
                 o += 1
-            word = txt[k:o+1] # "V{3}"
-            size = word[2:-1].split(',') # ['3']
-            m = create_vector(int(size[0]))
+            word = txt[k:o+1] # "V{1,2,3}"
+            inside = word[2:-1].split(',') # ['1', '2', '3']
+            m = create_vector(len(inside))
+            m.data = [[int(i) for i in inside]]
+            if txt[k-1] == 't':
+                m = transpose(m)
             k = o
         elif txt[k] in '+-*/' or txt[k].isdigit():
             m = txt[k]
@@ -105,7 +116,7 @@ def translate(txt: str):
                 case '-':
                     b.append(subtract(create_constants(a3.row, a3.col, float(a1)), a3))
                 case '/':
-                    b.append(divide_scalar(create_constants(a3.row, a3.col, float(a1)), a3))
+                    b.append(divide_scalar(a3, int(a1)))
             pass
     return to_string(b[0])
 
@@ -121,31 +132,39 @@ def answer(txt):
 def help():
     new_win = Tk()
     new_win.title("Помощь")
-    new_win.geometry('400x400')
+    new_win.geometry('300x200')
     text = "Поддерживаемые операции:\n"
-    text += "Сложение: M{(1,2); (3,4)} + M{(5,6); (7,8)}\n"
-    text += "Умножение на скаляр: M{(1,2); (3,4)} * 2\n"
-    text += "Умножение матриц: M{(1,2); (3,4)} * M{(5,6); (7,8)}\n"
-    text += "Транспонирование: tM{(1,2); (3,4)}'\n"
+    text += "Сложение: M{(1,2);(3,4)} + M{(5,6);(7,8)}\n"
+    text += "Умножение на скаляр: M{(1,2);(3,4)} * 2\n"
+    text += "Умножение матриц: M{(1,2);(3,4)} * M{(5,6); (7,8)}\n"
+    text += "Транспонирование: tM{(1,2);(3,4)}'\n"
     text += "Создание нулевой матрицы 3x3: Z{3,3}\n"
     text += "Создание единичной матрицы 3x3: E{3,3}\n"
-    text += "Создание вектора-строки 1x3: V{ 3 }\n"
+    text += "Создание вектора-строки (1,2,3): V{1,2,3}\n"
+    text += "Определитель: dM{(1,2);(3,4)}\n"
+    text += "Обратная матрица: iM{(1,2);(3,4)}\n"
     l = Label(new_win, text=text, font="Arial 10", fg="blue")
     l.grid(column=0, row=0)
     new_win.mainloop()
 
 def main():
     win = Tk()
-    win.title("ыыыы")
-    win.geometry('800x800')
-    #это свобода
-    bt1 = Button(win, text="Нажми меня", font="Arial 10", command=lambda: answer(txt))
+    win.title("Metrix")
+    win.geometry('400x400')
+    bt1 = Button(win, text="Нажми меня", font="Arial 10", command=lambda: perform_action(answer(txt)))
     bt1.grid(column=1, row=0)
-    txt = Entry(win, width=100)
+    txt = Entry(win, width=30, font="Arial 20")
     txt.grid(column=0, row=0)
+    txt.focus()
     bt2 = Button(win, text="Очистить", font="Arial 10", command=lambda: txt.delete(0, END))
     bt2.grid(column=2, row=0)
-    bt3 = Button(win, text="Помощь", font="Arial 10", command=help)
-    bt3.grid(column=3, row=0)
+    menu = Menu(win)
+    file_menu = Menu(menu, tearoff=0)
+    insert_menu = Menu(menu, tearoff=0)
+    menu.add_cascade(label="Файл", menu=file_menu)
+    menu.add_cascade(label="Помощь", command=help)
+    menu.add_cascade(label="Вставить", menu=insert_menu)
+    file_menu.add_command(label="Выход", command=win.quit)
+    win.config(menu=menu)
     win.mainloop()
 main()

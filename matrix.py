@@ -203,7 +203,12 @@ def determinant(mat: Matrix):
             return 0.0
         det *= mat.data[i][i]
     return round(det, 10)
-    ...
+
+def invert(mat: Matrix) -> Matrix:
+    if determinant(mat) == 0:
+        raise ValueError("Lol")
+    return divide_scalar(transpose(mat), determinant(mat))
+
 def to_string(mat):
     """Returns string representation of matrix."""
     if not isinstance(mat, Matrix):
