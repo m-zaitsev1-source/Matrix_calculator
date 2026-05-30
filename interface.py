@@ -1,11 +1,6 @@
 from tkinter import *
 from libraries.matrix import *
 from tkinter import messagebox
-def perform_action(func):
-    try:
-        func
-    except Exception as e:
-        messagebox.showerror("Ошибка", str(e))
 
 def translate(txt: str):
     #txt = "E{3,3} + E{3,3}"
@@ -121,13 +116,15 @@ def translate(txt: str):
     return to_string(b[0])
 
 def answer(txt):
-    new_win = Tk()
-    new_win.title("")
-    new_win.geometry('200x200')
-    text = translate(txt.get())
-    l = Label(new_win, text=text, font="Arial 10", fg="blue")
-    
-    l.grid(column=0, row=0)
+    try:
+        new_win = Tk()
+        new_win.title("")
+        new_win.geometry('200x200')
+        text = translate(txt.get())
+        l = Label(new_win, text=text, font="Arial 10", fg="blue")
+        l.grid(column=0, row=0)
+    except Exception as e:
+        messagebox.showerror("Ошибка", str(e))
 
 def help():
     new_win = Tk()
@@ -151,7 +148,7 @@ def main():
     win = Tk()
     win.title("Metrix")
     win.geometry('400x400')
-    bt1 = Button(win, text="Нажми меня", font="Arial 10", command=lambda: perform_action(answer(txt)))
+    bt1 = Button(win, text="Нажми меня", font="Arial 10", command=lambda: answer(txt))
     bt1.grid(column=1, row=0)
     txt = Entry(win, width=30, font="Arial 20")
     txt.grid(column=0, row=0)

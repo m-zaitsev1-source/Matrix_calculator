@@ -101,14 +101,17 @@ def extend(mat1: Matrix, new_rows, new_cols):
             new_mat.data[i][j] = mat1.data[i][j]
     return new_mat
 
-
 def add(mat1: Matrix, mat2: Matrix):
     """Returns the result of (mat1 + mat2)."""
     new_mat = create(max(mat1.row, mat2.row), max(mat1.col, mat2.col))
-    mat1 = extend(mat1, new_mat.row, new_mat.col)
-    mat2 = extend(mat2, new_mat.row, new_mat.col)
+    if mat1.row != new_mat.row and mat1.col != new_mat.col:
+        mat1 = extend(mat1, new_mat.row, new_mat.col)
+    if mat2.row != new_mat.row and mat2.col != new_mat.col:
+        mat2 = extend(mat2, new_mat.row, new_mat.col)
     for i in range(mat1.row):
         for j in range(mat1.col):
+            if mat1.data[i][j] == 0 and mat2.data[i][j]==0:
+                continue
             new_mat.data[i][j] = mat1.data[i][j] + mat2.data[i][j]
     return new_mat
     ...
