@@ -116,15 +116,16 @@ def translate(txt: str):
     return to_string(b[0])
 
 def answer(txt):
-    try:
-        new_win = Tk()
-        new_win.title("")
-        new_win.geometry('200x200')
-        text = translate(txt.get())
-        l = Label(new_win, text=text, font="Arial 10", fg="blue")
-        l.grid(column=0, row=0)
-    except Exception as e:
-        messagebox.showerror("Ошибка", str(e))
+    
+    new_win = Tk()
+    new_win.title("")
+    new_win.geometry('200x200')
+    text = translate(txt.get())
+    l = Label(new_win, text=text, font="Arial 10", fg="blue")
+    l.grid(column=0, row=0)
+    '''except Exception as e:
+        pass
+        messagebox.showerror("Ошибка", str(e))'''
 
 def help():
     new_win = Tk()

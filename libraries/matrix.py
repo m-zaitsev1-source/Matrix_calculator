@@ -1,3 +1,6 @@
+MAX_DEGREE = 0
+ST_COL = 0
+ST_ROW = 0
 class Matrix:
     """Matrix itself. Stores data as 1D list and keeps dimensions."""
     col: int
@@ -69,17 +72,65 @@ def destroy(mat: Matrix):
     return mat
 
 def multiply(mat1: Matrix, mat2: Matrix):
-    """Returns new matrix (similarly in the methods below), the result of (mat1 * mat2)."""
-    if mat1.col != mat2.row:
-        raise ValueError("Incompatible dimensions for multiplication")
-    new_mat = create(mat1.row, mat2.col)
-    for i in range(mat1.row):
-        for j in range(mat2.col):
-            sum = 0.0
-            for k in range(mat1.col):
-                sum += mat1.data[i][k] * mat2.data[k][j]
-            new_mat.data[i][j] = sum
-    return new_mat
+    """Returns new matrix (similarly in the methods below), the result of (mat1 * mat2). Algorithm: Strassen's."""
+    k = 1
+    while max(mat1.row, mat1.col, mat2.row, mat2.col) > 2**k:
+        k+=1
+    if k > MAX_DEGREE:
+        MAX_DEGREE = k
+        ST_COL = mat2.col
+        ST_ROW = mat1.row
+    mat1 = extend(mat1, 2**k, 2**k)
+    mat2 = extend(mat2, 2**k, 2**k)
+    new_mat = create(2**k, 2**k)
+    if k == 1:
+        new_mat.data[0][0] = mat1.data[0][0] * mat2.data[0][0] + mat1.data[0][1] * mat2.data[1][0]
+        new_mat.data[0][1] = mat1.data[0][0] * mat2.data[0][1] + mat1.data[0][1] * mat2.data[1][1]
+        new_mat.data[1][0] = mat1.data[1][0] * mat2.data[0][0] + mat1.data[1][1] * mat2.data[1][0]
+        new_mat.data[1][1] = mat1.data[1][0] * mat2.data[0][1] + mat1.data[1][1] * mat2.data[1][1]
+        return new_mat
+    else:
+        A11 = create_empty(2**k//2, 2**k//2)
+        A12 = create_empty(2**k//2, 2**k//2)
+        A21 = create_empty(2**k//2, 2**k//2)
+        A22 = create_empty(2**k//2, 2**k//2)
+        B11 = create_empty(2**k//2, 2**k//2)
+        B12 = create_empty(2**k//2, 2**k//2)
+        B21 = create_empty(2**k//2, 2**k//2)
+        B22 = create_empty(2**k//2, 2**k//2)
+        A11.data = [[mat1.data[i][j] for j in range(mat1.col//2)] for i in range(mat1.row//2)]
+        A12.data = [[mat1.data[i][j] for j in range(mat1.col//2, mat1.col)] for i in range(mat1.row//2)]
+        A21.data = [[mat1.data[i][j] for j in range(mat1.col//2)] for i in range(mat1.row//2, mat1.row)]
+        A22.data = [[mat1.data[i][j] for j in range(mat1.col//2, mat1.col)] for i in range(mat1.row//2, mat1.row)]
+        B11.data = [[mat2.data[i][j] for j in range(mat2.col//2)] for i in range(mat2.row//2)]
+        B12.data = [[mat2.data[i][j] for j in range(mat2.col//2, mat2.col)] for i in range(mat2.row//2)]
+        B21.data = [[mat2.data[i][j] for j in range(mat2.col//2)] for i in range(mat2.row//2, mat2.row)]
+        B22.data = [[mat2.data[i][j] for j in range(mat2.col//2, mat2.col)] for i in range(mat2.row//2, mat2.row)]
+        D = multiply(add(A11, A22), add(B11, B22))
+        D1 = multiply(subtract(A12, A22), add(B21, B22))
+        D2 = multiply(subtract(A21, A11), add(B11, B12))
+        H1 = multiply(add(A11, A12), B22)
+        H2 = multiply(add(A21, A22), B11)
+        V1 = multiply(A22, subtract(B21, B11))
+        V2 = multiply(A11, subtract(B12, B22))
+        C11 = add(add(D, D1), subtract(V1, H1))
+        C12 = add(V2, H1)
+        C21 = add(V1, H2)
+        C22 = add(add(D, D2), subtract(V2, H2))
+        for i in range(new_mat.row):
+            for j in range(new_mat.col):
+                if i < 2**(k-1) and j < 2**(k-1):
+                    new_mat.data[i][j] = C11.data[i][j]
+                elif i < 2**(k-1) and j >= 2**(k-1):
+                    new_mat.data[i][j] = C12.data[i][j-2**(k-1)]
+                elif i >= 2**(k-1) and j < 2**(k-1):
+                    new_mat.data[i][j] = C21.data[i-2**(k-1)][j]
+                elif i >= 2**(k-1) and j >= 2**(k-1):
+                    new_mat.data[i][j] = C22.data[i-2**(k-1)][j-2**(k-1)]
+        if k == MAX_DEGREE:
+            new_mat.data = [row[:ST_COL] for row in new_mat.data[:ST_ROW]]
+            MAX_DEGREE = 0
+        return new_mat
 
 def subtract(mat1: Matrix, mat2: Matrix):
     """Returns the result of (mat1 - mat2)."""
@@ -93,6 +144,8 @@ def subtract(mat1: Matrix, mat2: Matrix):
     ...
 def extend(mat1: Matrix, new_rows, new_cols):
     """Extend matrix to new dimensions by adding zeros."""
+    if mat1.row == new_rows and mat1.col == new_cols:
+        return mat1
     if new_rows < mat1.row or new_cols < mat1.col:
         raise ValueError("New dimensions must be greater than current")
     new_mat = create(new_rows, new_cols)
