@@ -1,6 +1,4 @@
-MAX_DEGREE = 0
-ST_COL = 0
-ST_ROW = 0
+
 class Matrix:
     """Matrix itself. Stores data as 1D list and keeps dimensions."""
     col: int
@@ -71,15 +69,11 @@ def destroy(mat: Matrix):
     mat.data = []
     return mat
 
-def multiply(mat1: Matrix, mat2: Matrix):
-    """Returns new matrix (similarly in the methods below), the result of (mat1 * mat2). Algorithm: Strassen's."""
+def _shtrassen_(mat1: Matrix, mat2: Matrix):
+    """Algorithm: Strassen's."""
     k = 1
     while max(mat1.row, mat1.col, mat2.row, mat2.col) > 2**k:
         k+=1
-    if k > MAX_DEGREE:
-        MAX_DEGREE = k
-        ST_COL = mat2.col
-        ST_ROW = mat1.row
     mat1 = extend(mat1, 2**k, 2**k)
     mat2 = extend(mat2, 2**k, 2**k)
     new_mat = create(2**k, 2**k)
@@ -106,13 +100,13 @@ def multiply(mat1: Matrix, mat2: Matrix):
         B12.data = [[mat2.data[i][j] for j in range(mat2.col//2, mat2.col)] for i in range(mat2.row//2)]
         B21.data = [[mat2.data[i][j] for j in range(mat2.col//2)] for i in range(mat2.row//2, mat2.row)]
         B22.data = [[mat2.data[i][j] for j in range(mat2.col//2, mat2.col)] for i in range(mat2.row//2, mat2.row)]
-        D = multiply(add(A11, A22), add(B11, B22))
-        D1 = multiply(subtract(A12, A22), add(B21, B22))
-        D2 = multiply(subtract(A21, A11), add(B11, B12))
-        H1 = multiply(add(A11, A12), B22)
-        H2 = multiply(add(A21, A22), B11)
-        V1 = multiply(A22, subtract(B21, B11))
-        V2 = multiply(A11, subtract(B12, B22))
+        D = _shtrassen_(add(A11, A22), add(B11, B22))
+        D1 = _shtrassen_(subtract(A12, A22), add(B21, B22))
+        D2 = _shtrassen_(subtract(A21, A11), add(B11, B12))
+        H1 = _shtrassen_(add(A11, A12), B22)
+        H2 = _shtrassen_(add(A21, A22), B11)
+        V1 = _shtrassen_(A22, subtract(B21, B11))
+        V2 = _shtrassen_(A11, subtract(B12, B22))
         C11 = add(add(D, D1), subtract(V1, H1))
         C12 = add(V2, H1)
         C21 = add(V1, H2)
@@ -127,10 +121,17 @@ def multiply(mat1: Matrix, mat2: Matrix):
                     new_mat.data[i][j] = C21.data[i-2**(k-1)][j]
                 elif i >= 2**(k-1) and j >= 2**(k-1):
                     new_mat.data[i][j] = C22.data[i-2**(k-1)][j-2**(k-1)]
-        if k == MAX_DEGREE:
-            new_mat.data = [row[:ST_COL] for row in new_mat.data[:ST_ROW]]
-            MAX_DEGREE = 0
         return new_mat
+
+def multiply(mat1: Matrix, mat2: Matrix):
+    """Returns the result of (mat1 * mat2)."""
+    if mat1.col != mat2.row:
+        raise ValueError("Матрицы не согласованы")
+    new_mat = _shtrassen_(mat1, mat2)
+    new_mat.data = [row[:mat2.col] for row in new_mat.data[:mat1.row]]
+    new_mat.row = mat1.row
+    new_mat.col = mat2.col
+    return new_mat
 
 def subtract(mat1: Matrix, mat2: Matrix):
     """Returns the result of (mat1 - mat2)."""
