@@ -2,136 +2,29 @@ from tkinter import *
 from libraries.matrix import *
 from tkinter import messagebox
 from math import *
-def translate(txt: str):
-    #txt = "E{3,3} + E{3,3}"
-    #txt = "M{(1,2,3); (4,5,6)} + M{(1,2,3); (4,5,6)}"
-    if 'M' not in txt and 'Z' not in txt and 'E' not in txt and 'V' not in txt:
-        if txt != "":
-            return str(eval(txt))
-        return ""
-    b = []
-    k = 0
-    is_first = True
-    while k < len(txt):
-        m = None
-        if txt[k] == "M":
-            o = k
-            while txt[o] != '}':
-                o += 1
-            word = txt[k:o+1] # "M{(1 2 3),(4 5 6)}"
-            l = word[2:-1].split(',') # ['(1 2 3)', '(4 5 6)']
-            for i in range(len(l)):
-                l[i] = l[i][1:-1].split(' ') # [['1', '2', '3'], ['4', '5', '6']]
-                for j in range(len(l[i])):
-                    l[i][j] = int(l[i][j])
-            m = create_empty(len(l), len(l[0]))
-            m.data = l
-            if txt[k-1] == 't':
-                m = transpose(m)
-            if txt[k-1] == "d":
-                m = determinant(m)
-            if txt[k-1] == "i":
-                m = invert(m)
-            k = o
-        elif txt[k] == "Z":
-            o = k
-            while txt[o] != '}':
-                o += 1
-            word = txt[k:o+1] # "Z{3,3}"
-            size = word[2:-1].split(',') # ['3', '3']
-            m = create(int(size[0]), int(size[1]))
-            k = o
-        elif txt[k] == "E":
-            o = k
-            while txt[o] != '}':
-                o += 1
-            word = txt[k:o+1] # "E{3,3}"
-            size = word[2:-1].split(',') # ['3', '3']
-            m = create_identity(int(size[0]), int(size[1]))
-            if txt[k-1] == 't':
-                m = m
-            if txt[k-1] == "d":
-                m = 1
-            if txt[k-1] == "i":
-                m = m
-            k = o
-        elif txt[k] == "V":
-            o = k 
-            while txt[o] != '}':
-                o += 1
-            word = txt[k:o+1] # "V{1,2,3}"
-            inside = word[2:-1].split(',') # ['1', '2', '3']
-            m = create_vector(len(inside))
-            m.data = [[int(i) for i in inside]]
-            if txt[k-1] == 't':
-                m = transpose(m)
-            k = o
-        elif txt[k] in '+-*/' or txt[k].isdigit():
-            m = txt[k]
-        elif txt[k] in '(':
-            is_first = True
-        elif txt[k] in ')':            
-            is_first = False
-        if m is not None:
-            if is_first:
-                b.append(m)
-            else:
-                b = [m] + b
-        k += 1
-    if len(b) == 2:
-        raise NotImplementedError("Операция пока не реализована")
-    while len(b) > 1:
-        a1 = b.pop()
-        a2 = b.pop()
-        a3 = b.pop()
-        if type(a1) == Matrix and type(a3) == Matrix:
-            match a2:
-                case '+':
-                    b.append(add(a1, a3))
-                case '-':
-                    b.append(subtract(a1, a3))
-                case '*':
-                    b.append(multiply(a3, a1))
-        elif type(a1) == Matrix and type(a3) == str:
-            match a2:
-                case '*':
-                    b.append(multiply_scalar(a1, float(a3)))
-                case '+':
-                    b.append(add(a1, create_constants(a1.row, a1.col, float(a3))))
-                case '-':
-                    b.append(subtract(a1, create_constants(a1.row, a1.col, float(a3))))
-                case '/':
-                    b.append(divide_scalar(a1, create_constants(a1.row, a1.col, float(a3))))
-        elif type(a1) == str and type(a3) == Matrix:
-            match a2:
-                case '*':
-                    b.append(multiply_scalar(a3, float(a1)))
-                case '+':
-                    b.append(add(create_constants(a3.row, a3.col, float(a1)), a3))
-                case '-':
-                    b.append(subtract(create_constants(a3.row, a3.col, float(a1)), a3))
-                case '/':
-                    b.append(divide_scalar(a3, int(a1)))
-            pass
-    return to_string(b[0])
-
+from translate import *
+history = []
 def answer(txt):
     new_win = Tk()
     new_win.title("")
     new_win.geometry('200x200')
     new_win.resizable(False, False)
     try:
-        text = translate(txt.get())
-        l = Label(new_win, text=text, font="Arial 10", fg="blue")
+        result = translate(txt.get())
+        history.append((result))
+        l = Label(new_win, text=to_string(result), font="Arial 10", fg="blue")
         l.grid(column=0, row=0)
     except Exception as e:
         messagebox.showerror("Ошибка", str(e))
         new_win.destroy()
 
 def help():
+    """Вывод окна с подсказкой"""
     new_win = Tk()
     new_win.title("Помощь")
-    new_win.geometry('300x200')
+    new_win.geometry('500x300')
+    new_win.resizable(False, False)
+    new_win.columnconfigure(0, weight=1)
     text = "Поддерживаемые операции:\n"
     text += "Сложение: M{(1 2),(3 4)} + M{(5 6),(7 8)}\n"
     text += "Умножение на скаляр: M{(1 2),(3 4)} * 2\n"
@@ -142,11 +35,13 @@ def help():
     text += "Создание вектора-строки (1,2,3): V{1 2 3}\n"
     text += "Определитель: dM{(1 2),(3 4)}\n"
     text += "Обратная матрица: iM{(1 2),(3 4)}\n"
-    l = Label(new_win, text=text, font="Arial 10", fg="blue")
-    l.grid(column=0, row=0)
+    text += "Отрицательные числа берутся в скобки"
+    l = Label(new_win, text=text, font="Arial 15", fg="blue")
+    l.grid(column=0, row=0, sticky="nsew")
     new_win.mainloop()
 
 def insert_matrix(txt, factor):
+    """Вставка матрицы в текстовое поле, factor - тип вставляемой матрицы (M, E, Z)"""
     def on_closing():
         if factor == "M":
             st = "M{" + ((("("+("0 "*col_scale.get())[:-1] +")")+",")*row_scale.get())[:-1] + "}"
@@ -154,6 +49,8 @@ def insert_matrix(txt, factor):
             st = "E{" + str(row_scale.get()) + "," + str(col_scale.get()) + "}"
         elif factor == "Z":
             st = "Z{" + str(row_scale.get()) + "," + str(col_scale.get()) + "}"
+        elif factor == "V":
+            st = "V{" + ("0 "*col_scale.get())[:-1] + "}"
         txt.insert(END, st)
         new_win.destroy()
     new_win = Tk()
@@ -167,6 +64,23 @@ def insert_matrix(txt, factor):
     row_scale.grid(column=0, row=1)
     col_scale = Scale(new_win, from_=2, to=5, orient=HORIZONTAL, label="Столбцы")
     col_scale.grid(column=0, row=2)
+    new_win.mainloop()
+
+def show_history():
+    """Показать историю вычислений"""
+    new_win = Tk()
+    new_win.title("История")
+    new_win.geometry('200x200')
+    new_win.columnconfigure(0, weight=1)
+    text = ""
+    if history == []:
+        text = "История пуста"
+    else:
+        l = len(history)
+        for i in range(l - 1, -1, -1):
+            text += str(l-i) + ") " + to_string(history[i]) + "\n\n"
+    l = Label(new_win, text=text, font="Arial 10", fg="blue")
+    l.grid(column=0, row=0)
     new_win.mainloop()
 
 def main():
@@ -186,13 +100,19 @@ def main():
     menu = Menu(win)
     file_menu = Menu(menu, tearoff=0)
     insert_menu = Menu(menu, tearoff=0)
+    history_menu = Menu(menu, tearoff=0)
     menu.add_cascade(label="Файл", menu=file_menu)
     menu.add_cascade(label="Помощь", command=help)
     menu.add_cascade(label="Вставить", menu=insert_menu)
+    menu.add_cascade(label="История", menu=history_menu)
     file_menu.add_command(label="Выход", command=win.quit)
     insert_menu.add_command(label="Вставить матрицу", command=lambda: insert_matrix(txt, "M"))
     insert_menu.add_command(label="Вставить единичную матрицу", command=lambda: insert_matrix(txt, "E"))
     insert_menu.add_command(label="Вставить нулевую матрицу", command=lambda: insert_matrix(txt, "Z"))
+    history_menu.add_command(label="Показать историю", command=show_history)
+    history_menu.add_command(label="Очистить историю", command=lambda: history.clear())
+    history_menu.add_command(label="Вставить ответ из истории", command=lambda: txt.insert(END, translate_back(history[-1]) if history else ""))
+    history_menu.add_command(label="Удалить последний ответ", command=lambda: history.pop() if history else None)
     win.config(menu=menu)
     win.mainloop()
 main()

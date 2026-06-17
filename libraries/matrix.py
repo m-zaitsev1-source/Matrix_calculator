@@ -28,14 +28,14 @@ def create(rows, cols):
     m = Matrix()
     m.row = rows
     m.col = cols
-    m.data = [[0.0]*cols for _ in range(rows)]
+    m.data = [[0]*cols for _ in range(rows)]
     return m
 
 def create_identity(rows, cols):
     """Create identity matrix (with min(rows,cols) ones on diagonal)."""
     m = create(rows, cols)
     for i in range(min(rows, cols)):
-        m.data[i][i] = 1.0
+        m.data[i][i] = 1
     return m
 
 def create_constants(rows, cols, value):
@@ -157,14 +157,16 @@ def extend(mat1: Matrix, new_rows, new_cols):
 
 def add(mat1: Matrix, mat2: Matrix):
     """Returns the result of (mat1 + mat2)."""
+    if not is_valid(mat1) or not is_valid(mat2):
+        raise ValueError("Invalid matrix")
     new_mat = create(max(mat1.row, mat2.row), max(mat1.col, mat2.col))
-    if mat1.row != new_mat.row and mat1.col != new_mat.col:
+    if mat1.row != new_mat.row or mat1.col != new_mat.col:
         mat1 = extend(mat1, new_mat.row, new_mat.col)
-    if mat2.row != new_mat.row and mat2.col != new_mat.col:
+    if mat2.row != new_mat.row or mat2.col != new_mat.col:
         mat2 = extend(mat2, new_mat.row, new_mat.col)
     for i in range(mat1.row):
         for j in range(mat1.col):
-            if mat1.data[i][j] == 0 and mat2.data[i][j]==0:
+            if mat1.data[i][j] == 0 and mat2.data[i][j] == 0:
                 continue
             new_mat.data[i][j] = mat1.data[i][j] + mat2.data[i][j]
     return new_mat
@@ -266,20 +268,3 @@ def invert(mat: Matrix) -> Matrix:
         raise ValueError("Lol")
     return divide_scalar(transpose(mat), determinant(mat))
 
-def to_string(mat):
-    """Returns string representation of matrix."""
-    if not isinstance(mat, Matrix):
-        return str(mat)
-    if not is_valid(mat):
-        raise ValueError("Invalid matrix")
-    s = ""
-    for i in range(mat.row):
-        s += "( "
-        for j in range(mat.col):
-            s += str(mat.data[i][j])
-            if j < mat.col - 1:
-                s += " , "
-        s += " )"
-        if i < mat.row - 1:
-            s += ";\n"
-    return s

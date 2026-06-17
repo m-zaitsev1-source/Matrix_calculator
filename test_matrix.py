@@ -3,6 +3,14 @@ def print_matrix(mat):
     """Print matrix in readable format."""
     for i in range(mat.row):
         print(mat.data[i])
+
+# проверка сложения матриц
+a1 = matrix.create(2, 2)
+a2 = matrix.create(3, 2)
+a1.data = [[1, 2], [3, 4]]
+a2.data = [[5, 6], [8, 9], [11, 12]]
+a3 = matrix.add(a2, a1)
+
 #проверка умножения матриц
 a1 = matrix.create(2, 2)
 a2 = matrix.create(2, 2)
