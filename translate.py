@@ -134,6 +134,8 @@ def to_string(mat):
 
 def translate_back(mat):
     """Перевод матрицы в строку для вставки в текстовое поле."""
+    if not isinstance(mat, Matrix):
+        return str(mat)
     s = "M{"
     for i in range(mat.row):
         s += "("

@@ -58,7 +58,7 @@ def insert_matrix(txt, factor):
     new_win.geometry('200x200')
     new_win.protocol("WM_DELETE_WINDOW", on_closing)
     new_win.columnconfigure(0, weight=1)
-    label = Label(new_win, text="Выберите размер матрицы", font="Arial 10", fg="blue")
+    label = Label(new_win, text="Выберите размер матрицы\n закройте окно для вставки", font="Arial 10", fg="blue")
     label.grid(column=0, row=0, sticky="nsew")
     row_scale = Scale(new_win, from_=2, to=5, orient=HORIZONTAL, label="Строки")
     row_scale.grid(column=0, row=1)

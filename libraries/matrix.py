@@ -28,7 +28,7 @@ def create(rows, cols):
     m = Matrix()
     m.row = rows
     m.col = cols
-    m.data = [[0]*cols for _ in range(rows)]
+    m.data = [[0.0]*cols for _ in range(rows)]
     return m
 
 def create_identity(rows, cols):
@@ -48,10 +48,12 @@ def create_constants(rows, cols, value):
 
 def is_valid(mat: Matrix):
     """Check if matrix has valid dimensions and data."""
-    size = 0
+    if len(mat.data) != mat.row:
+        return False 
     for i in range(mat.row):
-        size += len(mat.data[i])
-    return size == mat.row * mat.col
+        if len(mat.data[i]) != mat.col:
+            return False
+    return True
 
 def copy(mat: Matrix):
     """Create deep copy of matrix."""
@@ -78,10 +80,10 @@ def _shtrassen_(mat1: Matrix, mat2: Matrix):
     mat2 = extend(mat2, 2**k, 2**k)
     new_mat = create(2**k, 2**k)
     if k == 1:
-        new_mat.data[0][0] = mat1.data[0][0] * mat2.data[0][0] + mat1.data[0][1] * mat2.data[1][0]
-        new_mat.data[0][1] = mat1.data[0][0] * mat2.data[0][1] + mat1.data[0][1] * mat2.data[1][1]
-        new_mat.data[1][0] = mat1.data[1][0] * mat2.data[0][0] + mat1.data[1][1] * mat2.data[1][0]
-        new_mat.data[1][1] = mat1.data[1][0] * mat2.data[0][1] + mat1.data[1][1] * mat2.data[1][1]
+        new_mat.data[0][0] = float(mat1.data[0][0] * mat2.data[0][0] + mat1.data[0][1] * mat2.data[1][0])
+        new_mat.data[0][1] = float(mat1.data[0][0] * mat2.data[0][1] + mat1.data[0][1] * mat2.data[1][1])
+        new_mat.data[1][0] = float(mat1.data[1][0] * mat2.data[0][0] + mat1.data[1][1] * mat2.data[1][0])
+        new_mat.data[1][1] = float(mat1.data[1][0] * mat2.data[0][1] + mat1.data[1][1] * mat2.data[1][1])
         return new_mat
     else:
         A11 = create_empty(2**k//2, 2**k//2)
@@ -140,7 +142,7 @@ def subtract(mat1: Matrix, mat2: Matrix):
     mat2 = extend(mat2, new_mat.row, new_mat.col)
     for i in range(mat1.row):
         for j in range(mat1.col):
-            new_mat.data[i][j] = mat1.data[i][j] - mat2.data[i][j]
+            new_mat.data[i][j] = float(mat1.data[i][j]) - float(mat2.data[i][j])
     return new_mat
     ...
 def extend(mat1: Matrix, new_rows, new_cols):
@@ -152,7 +154,7 @@ def extend(mat1: Matrix, new_rows, new_cols):
     new_mat = create(new_rows, new_cols)
     for i in range(mat1.row):
         for j in range(mat1.col):
-            new_mat.data[i][j] = mat1.data[i][j]
+            new_mat.data[i][j] = float(mat1.data[i][j])
     return new_mat
 
 def add(mat1: Matrix, mat2: Matrix):
@@ -168,7 +170,7 @@ def add(mat1: Matrix, mat2: Matrix):
         for j in range(mat1.col):
             if mat1.data[i][j] == 0 and mat2.data[i][j] == 0:
                 continue
-            new_mat.data[i][j] = mat1.data[i][j] + mat2.data[i][j]
+            new_mat.data[i][j] = float(mat1.data[i][j]) + float(mat2.data[i][j])
     return new_mat
     ...
 
@@ -177,17 +179,17 @@ def multiply_scalar(mat: Matrix, value: float):
     new_mat = create(mat.row, mat.col)
     for i in range(mat.row):
         for j in range(mat.col):
-            new_mat.data[i][j] = mat.data[i][j] * value
+            new_mat.data[i][j] = float(mat.data[i][j]) * value
     return new_mat
 
 def divide_scalar(mat: Matrix, value: float):
     """Divide matrix by scalar."""
-    if value == 0:
-        raise ValueError("Посос")
+    if value == 0.0:
+        raise ValueError("Cannot divide by zero")
     new_mat = create(mat.row, mat.col)
     for i in range(mat.row):
         for j in range(mat.col):
-            new_mat.data[i][j] = mat.data[i][j] / value
+            new_mat.data[i][j] = float(mat.data[i][j]) / value
     return new_mat
     ...
 
@@ -214,37 +216,39 @@ def transpose(mat: Matrix):
     new_mat = create(mat.col, mat.row)
     for i in range(mat.row):
         for j in range(mat.col):
-            new_mat.data[j][i] = mat.data[i][j]
+            new_mat.data[j][i] = float(mat.data[i][j])
     return new_mat
 
-def staircase(mat: Matrix):
+def staircase(new_mat: Matrix):
     """Return row echelon form of matrix."""
-    if not is_valid(mat):
+    if not is_valid(new_mat):
         raise ValueError("Invalid matrix")
-    new_mat = copy(mat)
-    for i in range(new_mat.row-1):
-        # Find pivot
+    #Cначала считыем по Гауссу
+    mat = copy(new_mat)
+    for i in range(mat.row-1):
+        # Нахожу ведущий элемент в строке
         pivot = None
-        for j in range(new_mat.col):
-            if new_mat.data[i][j] != 0:
+        for j in range(mat.col):
+            if mat.data[i][j] != 0:
                 pivot = j
                 break
         if pivot is None:
             continue
-        # Eliminate below
-        for k in range(i+1, new_mat.row):
-            factor = new_mat.data[k][pivot] / new_mat.data[i][pivot]
+        # Привожу все строки ниже текущей к нулю в столбце ведущего элемента
+        for k in range(i+1, mat.row):
+            factor = mat.data[k][pivot] / mat.data[i][pivot]
             if factor == 0:
                 continue
-            for j in range(pivot, new_mat.col):
-                new_mat.data[k][j] -= factor * new_mat.data[i][j]
-    an_mat = create(new_mat.row, new_mat.col)
+            for j in range(pivot, mat.col):
+                mat.data[k][j] -= factor * mat.data[i][j]
+    #Потом доводим по ЖОрдану
+    an_mat = create(mat.row, mat.col)
     k = 0
-    while k < new_mat.col: 
-        for j in range(new_mat.row):
-            if new_mat.data[j][k] != 0:
-                an_mat.data[k][k] = new_mat.data[j][k]
-                new_mat.data[j] = [0.0] * new_mat.col
+    while k < mat.col: 
+        for j in range(mat.row):
+            if mat.data[j][k] != 0:
+                an_mat.data[k][k] = mat.data[j][k]
+                mat.data[j] = [0.0] * mat.col
                 break
         k += 1
     return an_mat
@@ -261,10 +265,14 @@ def determinant(mat: Matrix):
         if mat.data[i][i] == 0:
             return 0.0
         det *= mat.data[i][i]
-    return round(det, 10)
+    return round(det, 4)
 
 def invert(mat: Matrix) -> Matrix:
-    if determinant(mat) == 0:
-        raise ValueError("Lol")
-    return divide_scalar(transpose(mat), determinant(mat))
+    d = determinant(mat)
+    """Returns inverse of matrix (square only)."""
+    if not is_valid(mat):
+        raise ValueError("Invalid matrix")
+    if d == 0:
+        raise ValueError("Matrix is not invertible")
+    return divide_scalar(transpose(mat), d)
 
